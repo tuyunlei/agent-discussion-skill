@@ -76,9 +76,7 @@ Every peer prompt should include:
 
 Use `acpx` when it is available, because it can drive multiple coding agents through a
 consistent CLI. For general `acpx` command behavior, use the `acpx` skill. Read
-`references/acpx-setup.md` first if the `acpx` CLI or `acpx` skill may be missing. Read
-`references/acpx-adapters.md` before running `acpx`; it tells you which agent-specific
-reference to load for the selected peer.
+`references/acpx-setup.md` first if the `acpx` CLI or `acpx` skill may be missing.
 
 Stable mechanics regardless of adapter:
 
@@ -91,6 +89,41 @@ Stable mechanics regardless of adapter:
 - Do not poll redirected output files as a liveness check.
 - Do not use one-shot execution for a multi-round discussion when a persistent session is
   available.
+
+Common `acpx` pattern:
+
+```bash
+TOPIC=short-topic-name
+PEER=chosen-agent
+WORK="${XDG_CACHE_HOME:-$HOME/.cache}/agent-discussion/$TOPIC"
+mkdir -p "$WORK"
+
+# If round1-prompt.md already exists, the topic name was reused. Add a date suffix instead
+# of overwriting another discussion.
+
+acpx --cwd "$WORK" "$PEER" sessions ensure --name "$TOPIC"
+
+acpx --cwd "$WORK" --approve-all --prompt-retries 2 --timeout 1800 --format quiet \
+  "$PEER" prompt -s "$TOPIC" --file "$WORK/round1-prompt.md" \
+  > "$WORK/round1-reply.out" 2> "$WORK/round1-reply.err"
+```
+
+Run every later round with the same `PEER`, `TOPIC`, and `WORK`. After selecting the peer,
+load the matching adapter reference when it exists:
+
+- `references/adapters/codex.md` for `codex`
+- `references/adapters/claude.md` for `claude`
+
+If no matching adapter reference exists, rely only on the common pattern above and the general
+`acpx` skill.
+
+Common pitfalls:
+
+- When `acpx` stdout is redirected, the output file may remain empty until the peer turn
+  finishes. Do not retry because a file looks empty. Wait for the command to return, then
+  inspect exit code and full output.
+- Never use shared prompt paths like `/tmp/r1_prompt.md`. Use a semantic per-discussion cache
+  directory such as `$XDG_CACHE_HOME/agent-discussion/<topic>` or another isolated path.
 
 ## Guardrails
 
