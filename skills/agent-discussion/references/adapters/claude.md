@@ -20,3 +20,15 @@ in each prompt file.
 If the current executor is Claude, do not choose `claude` as the peer unless the user
 explicitly requested it and understands that this may reduce model diversity. Prefer a
 different coding agent when available.
+
+## Startup Bound
+
+Claude adapter startup can fail or hang before a session is created. Treat session creation as
+part of the testable peer-reachability check:
+
+- If `claude sessions ensure` does not return in a reasonable bounded attempt, stop waiting.
+- Check `acpx --cwd "$WORK" claude status` and `sessions list --local`.
+- If no Claude session or PID is visible, report that Claude was not reached through `acpx`
+  rather than retrying indefinitely.
+- Clean up only processes scoped to the discussion work directory if a startup attempt left
+  dangling commands.
