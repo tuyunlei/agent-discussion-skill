@@ -77,8 +77,8 @@ Every peer prompt should include:
 Use `acpx` when it is available, because it can drive multiple coding agents through a
 consistent CLI. For general `acpx` command behavior, use the `acpx` skill. Read
 `references/acpx-setup.md` first if the `acpx` CLI or `acpx` skill may be missing. Read
-`references/acpx-adapters.md` before running `acpx`, choosing a specific adapter, or relying
-on adapter-specific behavior.
+`references/acpx-adapters.md` before running `acpx`; it tells you which agent-specific
+reference to load for the selected peer.
 
 Stable mechanics regardless of adapter:
 

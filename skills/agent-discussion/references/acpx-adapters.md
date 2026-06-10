@@ -1,7 +1,7 @@
-# acpx Adapter Notes
+# acpx Adapter Index
 
 Load this reference when `agent-discussion` will run a peer through `acpx`.
-Keep adapter-specific behavior here, not in the main skill.
+Keep agent-specific behavior in the per-adapter files below, not in this index.
 
 If the `acpx` CLI or `acpx` skill may be missing, read `acpx-setup.md` before using these
 commands.
@@ -33,38 +33,13 @@ Run every later round with the same `PEER`, `TOPIC`, and `WORK`.
   available.
 - If no different coding agent is available, ask the user or explain the limitation.
 - Use `acpx` adapter names literally, such as `codex`, `claude`, or `gemini`.
+- After selecting the peer, read the matching adapter reference when it exists:
+  - `adapters/codex.md` for `codex`
+  - `adapters/claude.md` for `claude`
+- If no matching adapter reference exists, rely only on the common pattern above and the
+  general `acpx` skill.
 
-## Claude Adapter
-
-- Consider `--append-system-prompt` to set the peer stance once for the session:
-
-```bash
-acpx --cwd "$WORK" --append-system-prompt \
-  "You are a peer coding agent. Do not rubber-stamp; disagree when evidence supports it." \
-  "$PEER" sessions ensure --name "$TOPIC"
-```
-
-- Still include the round-specific ask and evidence mandate in each prompt file.
-
-## Codex Adapter
-
-Use these notes only when the selected peer is `codex`.
-
-- `codex prompt -s <topic>` keeps continuity; `codex exec` is one-shot and loses the
-  multi-round discussion state.
-- With `--format quiet`, stdout is the peer's final answer text and token/status details go
-  to stderr. A non-zero exit means the turn failed.
-- `--format json` emits ACP JSON-RPC frames. For `codex-acp`, answer chunks have appeared in
-  `session/update` -> `agent_message_chunk.content.text`; do not assume a generic
-  `{"type":"result"}` schema.
-- Codex can ignore `--append-system-prompt`; put peer stance and role framing in the prompt
-  body.
-- Codex replies may start with a multi-byte character or a very long first line. Read `.out`
-  files whole with `cat` or an equivalent full-file read, not `head`, `sed`, or byte previews.
-- If you need liveness, use an `acpx` status/history command for the same `--cwd`; do not infer
-  failure from an empty redirected output file mid-turn.
-
-## Output Buffering Pitfall
+## Common Output Pitfall
 
 When `acpx` stdout is redirected, the output file may remain empty until the peer turn
 finishes. This is normal. Do not retry because a file looks empty. Start one blocking command,
