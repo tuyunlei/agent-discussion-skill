@@ -1,0 +1,27 @@
+{
+  "skill_name": "agent-discussion",
+  "notes": "Evals test discussion quality and orchestration, not triggering. Triggering is explicit-only by design; with_skill runs are handed the skill path directly. Each run is bounded: at most one real peer round; if acpx or the chosen adapter is unavailable or slow, the agent must still persist the exact acpx commands and full prompt bodies it would send, plus the discussion doc, so orchestration is gradeable.",
+  "evals": [
+    {
+      "id": 0,
+      "name": "auth-rearch-explicit",
+      "prompt": "我刚和你理了个新的鉴权重构方案，草稿在 auth_redesign.md。你拿这个去和另一个 coding agent 讨论一下，你俩互相纠错、把方案完善，别只针对单个问题打补丁。最后把收敛后的结论写回文档给我 review。",
+      "files": ["inputs/auth_redesign.md"],
+      "expected_output": "Writes/updates a design doc and gives its path; chooses or asks for a peer agent instead of assuming Codex; uses a persistent session from round 1 rather than one-shot exec; acpx commands use --approve-all + --file; the peer prompt carries a research-first mandate AND the no-patching/rethink-the-whole-architecture rule; the main agent contributes independent findings (peer, not relay), e.g. flags JWT non-revocation, localStorage XSS, no refresh rotation."
+    },
+    {
+      "id": 1,
+      "name": "cache-named-skill",
+      "prompt": "这个缓存失效的设计我总觉得哪里不对，草稿在 cache_invalidation.md。用 agent-discussion，找另一个 agent 跟你一起把它捋清楚，直到你俩达成一致。",
+      "files": ["inputs/cache_invalidation.md"],
+      "expected_output": "Same orchestration expectations as eval 0. Substantively, Claude should independently surface real issues (write-then-DEL race, no TTL backstop so a missed DEL leaks stale forever, cache penetration/stampede on cold key) rather than only echoing the other agent."
+    },
+    {
+      "id": 2,
+      "name": "ratelimit-converge",
+      "prompt": "我们定了个限流方案，草稿在 rate_limit.md。开个持久 session，让另一个 agent 跟你来回 review，直到你俩收敛，最后把结论写回文档。",
+      "files": ["inputs/rate_limit.md"],
+      "expected_output": "Same orchestration expectations. Emphasis on persistent named session + multi-round back-and-forth + explicit convergence/sign-off, then doc update. Substantively should catch the fixed-window boundary burst (up to 2x at the minute edge) and the INCR-then-EXPIRE non-atomicity."
+    }
+  ]
+}

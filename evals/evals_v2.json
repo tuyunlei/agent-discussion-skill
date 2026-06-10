@@ -1,0 +1,47 @@
+{
+  "skill_name": "agent-discussion",
+  "iteration": 2,
+  "notes": "v2 evals test the GENERALIZATION of the skill (now topic-agnostic discussion, not review-only), not just the bug fixes. 5 cases span discussion TYPES: architecture (regression anchor), incident/debugging, selection decision, claim verification, and a trivial negative case. Each with_skill run is bounded to AT MOST 2 real peer rounds to cap cost; if acpx or the chosen adapter is unavailable or slow, the agent must still persist the exact acpx commands + full prompt bodies so orchestration & discipline are gradeable. Baselines run the same prompt with no skill.",
+  "evals": [
+    {
+      "id": 0,
+      "name": "arch-regression",
+      "type": "architecture-design",
+      "prompt": "我刚理了个鉴权重构方案，草稿在 auth_redesign.md。和另一个 coding agent 讨论一下，你俩把它对清楚，最后把结论写回文档给我。",
+      "files": ["inputs_v2/auth_redesign.md"],
+      "expected_output": "Regression anchor: confirms de-domaining didn't break the original sweet spot. Should choose or ask for a peer agent instead of assuming Codex, then drive a real multi-round peer discussion over a single persistent session (no exec), surface the JWT non-revocation contradiction / localStorage XSS / refresh model, and converge a doc. Discipline here legitimately CAN lean on simplicity/first-principles since it's a design — but that must be the main agent's contextual choice, not a hardcoded ritual."
+    },
+    {
+      "id": 1,
+      "name": "incident-oom",
+      "type": "debugging-incident",
+      "prompt": "线上有个 OOM 问题，详情在 oom_incident.md。拉个 agent 一起把这个事的根因定位捋清楚，别让我瞎排查。",
+      "files": ["inputs_v2/oom_incident.md"],
+      "expected_output": "GENERALIZATION test. Correct discipline is EVIDENCE-DRIVEN root-causing, NOT 'rethink the whole architecture'. The discussion should zero in on the obvious smoking gun (DailyReconcileJob doing findAll() of 800k rows into memory at 3am = transient allocation OOM, NOT a leak) and CORRECT the user's stated 'memory leak' hypothesis. RED FLAG if the run imports architecture-review rituals (first-principles redesign, 'no patching') onto a debugging task. Must still be a real multi-round session over acpx."
+    },
+    {
+      "id": 2,
+      "name": "selection-mq",
+      "type": "selection-decision",
+      "prompt": "我们要选消息队列，背景和我的倾向都在 mq_selection.md 里。用 agent-discussion，和另一个模型把这个选型对一下，别让我拍脑袋。",
+      "files": ["inputs_v2/mq_selection.md"],
+      "expected_output": "GENERALIZATION test. Correct discipline is laying out OPTIONS + TRADEOFFS against the stated constraints and giving the strongest case AGAINST the user's 'all-Kafka' lean (team unfamiliarity, weak ops, RabbitMQ fits the fan-out/work-queue use case 1 well; Kafka fits the high-throughput telemetry use case 2). Should NOT 'hunt for bugs' or 'redesign from first principles'. Should end leaving the decision to the user with tradeoffs explicit. Real multi-round acpx session."
+    },
+    {
+      "id": 3,
+      "name": "verify-perf-claim",
+      "type": "claim-verification",
+      "prompt": "我有个性能优化结论想推广全公司，先别急，结论和当时情况都在 perf_claim.md。找个 agent 帮我核一核这个结论靠不靠谱。",
+      "files": ["inputs_v2/perf_claim.md"],
+      "expected_output": "GENERALIZATION test. Correct discipline is FINDING COUNTER-EVIDENCE / checking the reasoning chain. The fatal flaw: a confounded experiment — an index was added in the SAME release, and the before/after was day-vs-day not a controlled A/B, so attributing the speedup to fastjson2 is unsupported; the index is the more likely cause for a DB-backed endpoint. Should also flag fastjson2's historical security/correctness baggage before a company-wide push. Should NOT redesign anything. Real multi-round acpx session."
+    },
+    {
+      "id": 4,
+      "name": "trivial-negative",
+      "type": "trivial-should-decline",
+      "prompt": "用 agent-discussion，帮我把 readme_typo.md 里那几个错别字改一下。",
+      "files": ["inputs_v2/readme_typo.md"],
+      "expected_output": "NEGATIVE case. Even though the skill is named explicitly, fixing 5 typos is too trivial to be worth a peer discussion loop. Correct behavior: say plainly that this doesn't warrant agent-discussion, just make the fix directly (or note it would, then proceed minimally). RED FLAG: spinning up a peer session and running adversarial rounds to 'discuss' typo fixes — that is exactly the over-application the skill's opening guidance warns against."
+    }
+  ]
+}
