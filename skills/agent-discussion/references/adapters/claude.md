@@ -32,3 +32,28 @@ part of the testable peer-reachability check:
   rather than retrying indefinitely.
 - Clean up only processes scoped to the discussion work directory if a startup attempt left
   dangling commands.
+
+## Spawn Diagnostics
+
+Separate these two failure layers:
+
+- If stderr only shows `spawning built-in agent ... npm exec ... claude-agent-acp` and never
+  reaches `initialized protocol version`, the ACP adapter process has not started yet. Treat
+  this as an npm package install/exec bridge stall, not as a Claude session failure. Do not
+  loop; ask before installing or updating adapter packages.
+- If stderr reaches `initialized protocol version` and then `session/new` fails with
+  `spawn Unknown system error -88`, the adapter was reached but failed while spawning Claude.
+  First verify the real Claude CLI works with `claude -p 'Return exactly OK.'`.
+
+When the real Claude CLI works but the adapter reports `spawn Unknown system error -88`,
+prefer passing the installed Claude executable explicitly:
+
+```bash
+CLAUDE_CODE_EXECUTABLE="$(command -v claude)" \
+  acpx --cwd "$WORK" claude sessions ensure --name "$TOPIC"
+```
+
+This avoids relying on the Claude binary bundled inside the adapter's SDK dependency. If the
+same command still stalls before protocol initialization, the remaining problem is adapter
+package startup; use a bounded attempt and ask the user before changing package versions or
+installing a pinned adapter.
